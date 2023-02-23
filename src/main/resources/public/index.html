@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Kalaha Board Game</title>
+</head>
+<style>
+
+h1{
+
+    font-size: 80px;
+    margin-bottom: 0px;
+}
+h2{
+
+    text-align: center;
+    margin: 5px;
+}
+h3{
+    margin-top: 10px;
+    margin-bottom: 5px;
+    font-size:22px;
+}
+.Content{
+    text-align: center;
+    max-width: 800px;
+    vertical-align: middle;
+    margin: auto;
+    background-color:#edf6e9;
+    Font-size: 20px;
+}
+.GameContainer {
+    background-color: #66cdaa;
+    padding:20px;
+    font-size: 30px;
+    border-radius: 50px;
+    margin-bottom: 25px;
+    margin-top: 25px;
+}
+.TopUI{
+    display:grid;
+    grid-template-columns: 1fr 2fr 1fr;
+    margin: 20px;
+}
+.Board{
+    display:grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    grid-gap: 3px;
+    padding: 10px;
+    border: 20px solid #ffff;
+    border-radius: 35px;
+}
+.Log{
+    background-color:black;
+    color: white;
+    font-size: 17px;
+    text-align: left;
+    border-radius: 35px;
+    padding: 15px 25px 15px 25px;
+    margin-top: 20px;
+    height: 120px;
+    overflow: auto;
+}
+
+.Kalaha-left{
+    grid-column-start:1;
+    grid-column-end:2;
+    grid-row-start:1;
+    grid-row-end:3;
+}
+.Kalaha-right{
+    grid-column-start:8;
+    grid-column-end:9;
+    grid-row-start:1;
+    grid-row-end:3;
+}
+.Pit {
+    background-color: rgba(255,255,255,0.7);
+    padding: 20px;
+    margin:0;
+    border: 3px solid #ffff;
+    border-radius: 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: Arabian;
+}
+.Valid{
+    border: 3px solid #ffff;
+    animation: border-pulsate 2s infinite;
+}
+.Valid:Hover{
+    background-color: rgba(255,255,255,0.9);
+}
+.Active{
+    border: 3px solid #ffff;
+    border-radius:20px;
+    animation: border-pulsate 2s infinite;
+}
+.Player{
+    border: 3px solid #ffff;
+    border-radius:20px;
+}
+
+@keyframes border-pulsate {
+    0%   { border-color: rgba(255, 255, 255, 1); }
+    50%  { border-color: rgba(0, 0, 0, 1); }
+    100% { border-color: rgba(255, 255, 255, 1); }
+}
+</style>
+<body class="Content">
+    <div class="Info">
+        <H1>Kalaha</H1>
+        <H2>Board Game</H2>
+    </div>
+    <div class="GameContainer">
+        <div class="TopUI">
+            <div class="UI-Element Player1Score Player P1 Active">P1 Score: 0</div>
+            <div class="UI-Element Turn">Turn: 10</div>
+            <div class="UI-Element Player2Score Player P2">P2 Score: 0</div>
+        </div>
+        <div class="Spawner">
+
+        </div>
+        <div class="Board">
+            <div class="Kalaha-left Pit">0</div>
+            <div class="Pit P1 Valid">0</div>
+            <div class="Pit P1 Valid">0</div>
+            <div class="Pit P1 Valid">0</div>
+            <div class="Pit P1 Valid">0</div>
+            <div class="Pit P1 Valid">0</div>
+            <div class="Pit P1 Valid">0</div>
+            <div class="Kalaha-right Pit">0</div>
+            <div class="Pit P2">0</div>
+            <div class="Pit P2">0</div>
+            <div class="Pit P2">0</div>
+            <div class="Pit P2">0</div>
+            <div class="Pit P2">0</div>
+            <div class="Pit P2">0</div>
+        </div>
+        <div class="Log">
+        </div>
+    </div>
+</body>
+
+<script type="text/javascript" language="JavaScript">
+    
+    var animSpeedInMS = 200;
+    var activePlayer = 0;
+    var pits;
+
+    var p1Score = document.getElementsByClassName("Player1Score")[0];
+    var p2Score = document.getElementsByClassName("Player2Score")[0];
+    var TurnUI = document.getElementsByClassName("Turn")[0];
+    var spawner = document.getElementsByClassName("Spawner")[0];
+    var board =  document.getElementsByClassName("Board")[0];
+    var log =  document.getElementsByClassName("Log")[0];
+    
+    SetupGame();
+    function SetupGame(){
+        PreparePitFunctionality();
+        GetGame();    
+         
+    }
+
+    function PreparePitFunctionality(){
+        pits = Array.prototype.slice.call(document.getElementsByClassName("Pit"));
+        
+        for(var i = 0; i < pits.length; i++){
+            if(i < 8)
+                pits[i].value = i;
+            else
+                pits[i].value = 13 - i + 8;
+
+            pits[i].onclick = OnPitClick;
+        }
+        
+        pits.sort((a,b) =>{
+            return a.value < b.value ? -1 : 1;
+        })
+    }
+
+    function OnPitClick(){
+        if(this.classList.contains("Valid")){
+            PostGame(this.value, activePlayer);
+        }
+        else{
+            console.log("Invalid Move");
+            console.log(this.value);
+        }
+    }
+
+    function StartDropDownAnimationSimple(el, amount, onAnimationEnd){
+        if(amount > 0){
+            StartDropDownAnimation(el, amount, -100, 0, onAnimationEnd);
+        }else{
+            StartDropDownAnimation(el, Math.abs(amount), 0, -100, onAnimationEnd);
+        }
+    }
+    
+    function StartDropDownAnimation(el, amount, startOffset, goalOffset, onAnimationEnd){
+        var spawn = document.createElement('div');
+        spawn.innerHTML = amount;
+        
+        spawn.style.position = "absolute";
+        spawn.style.width = "40px";
+        spawn.style.top = (startOffset + el.offsetTop).toString() + "px";
+        spawn.style.left = el.offsetLeft.toString() + "px";
+        spawn.className = "Pit DropDown";
+        spawner.appendChild(spawn);
+
+
+        setTimeout(() => spawn.style.top = (goalOffset + el.offsetTop).toString() + "px", 10);
+        spawn.addEventListener('transitionend', ()=>spawn.remove());
+        if(onAnimationEnd != null){
+            spawn.addEventListener('transitionend', onAnimationEnd);
+            lastSpawn = spawn;
+        }
+    }
+    
+    function SetPitValue(Index, Amount){
+        pits[Index].innerHTML = Amount;
+    }
+
+
+    var lastSpawn;
+
+    function SetGameViewFromJSONViaTransforms(gameState){
+        console.log(gameState.Log.length);
+        DisableAllPits();
+
+        var animDelay = 0;
+        gameState.Log.forEach((e) => {
+            console.log(e);
+            
+            switch(e.Type){
+                case "PitLog":
+                    if(e.AmountAdded > 0){
+                    setTimeout(
+                        () => StartDropDownAnimationSimple(pits[e.Index],e.AmountAdded,
+                            SetPitValue(e.Index,e.FinalAmount)
+                        ), 
+                        animDelay
+                    );}
+                    else{
+                        setTimeout(() => StartDropDownAnimationSimple(pits[e.Index], e.AmountAdded,null), animDelay);
+                        setTimeout(() => SetPitValue(e.Index,e.FinalAmount), animDelay);
+                        setTimeout(() => {
+                            if(lastSpawn != null)
+                                lastSpawn.removeEventListener('transitionend', SetPitValue);
+                            }, animDelay);
+                    }
+                break;
+                case "TextLog":
+                    setTimeout(
+                        () => log.insertAdjacentHTML('afterbegin',e.Log + "<br\>")
+                    );
+                break;
+                default:
+                    console.log("Text Log type not found");
+                break;
+            }
+            
+            animDelay += animSpeedInMS;
+        });
+
+        setTimeout(() => SetActivePlayerAndPitsToValid(gameState),animDelay);
+        
+    }
+
+    function SetGameViewFromJSON(gameState){
+        console.log("SetGameViewFromJSON");
+        SetGameViewFromJSONViaTransforms(gameState);
+        return;
+        
+
+        pits.forEach(element => {
+            var curStones = gameState.Pits[element.value].stones
+            element.innerHTML = curStones;
+            
+            IfTrueAddElseRemoveClass(element, "Valid",
+                element.classList.contains("P1") && activePlayer == 0 && curStones > 0|| 
+                element.classList.contains("P2") && activePlayer == 1 && curStones > 0);
+        });
+
+        p1Score.innerHTML = "P1 Score: " + gameState.Player1Score;
+        p2Score.innerHTML = "P2 Score: " + gameState.Player2Score;
+
+        IfTrueAddElseRemoveClass(p1Score, "Active", activePlayer == 0);
+        IfTrueAddElseRemoveClass(p2Score, "Active", activePlayer == 1);
+
+        if(activePlayer == -1)
+            alert("Congratulations Player1!");
+        if(activePlayer == -2)
+            alert("Congratulations Player2!");
+    }
+
+    function DisableAllPits(){
+        pits.forEach(element => {
+            IfTrueAddElseRemoveClass(element, "Valid",false);
+        });
+    }
+
+    function SetActivePlayerAndPitsToValid(gameState){
+        console.log("SetActivePlayerAndPitsToValid");
+        if(gameState.NextTurnState == "WinP1" || gameState.NextTurnState == "WinP2")
+            activePlayer = gameState.NextTurnState == "WinP1" ? -1 : -2;
+        else
+            activePlayer = gameState.NextTurnState == "TurnP1" ? 0 : 1;
+        
+        TurnUI.innerHTML = "Player " + (activePlayer == 0? "1" : "2") + " Turn: " + gameState.Turn;
+
+        pits.forEach(element => {   
+            var curStones = gameState.Pits[element.value].stones;         
+            IfTrueAddElseRemoveClass(element, "Valid",
+                element.classList.contains("P1") && activePlayer == 0 && curStones > 0|| 
+                element.classList.contains("P2") && activePlayer == 1 && curStones > 0);
+        });
+
+        p1Score.innerHTML = "P1 Score: " + gameState.Player1Score;
+        p2Score.innerHTML = "P2 Score: " + gameState.Player2Score;
+
+        // Set the right player active
+        IfTrueAddElseRemoveClass(p1Score, "Active", activePlayer == 0);
+        IfTrueAddElseRemoveClass(p2Score, "Active", activePlayer == 1);
+    }
+
+    function IfTrueAddElseRemoveClass(element, className, condition){
+        if(condition){
+            element.classList.add(className);
+        }else{
+            element.classList.remove(className);
+        }
+    }
+
+    function GetGame(){
+        console.log("GetGame");
+        var result;
+        fetch('/game')
+        .then(response => response.json())
+        .then(data =>{
+            console.log(data);
+            SetGameViewFromJSON(data);
+        }).catch(error => console.log(error))
+        return result;
+    }
+
+    function PostGame(Index, Player){
+        console.log("PostGame");
+        var result;
+        postRequest('/game',{
+            "SelectedBucket": Index,
+            "PlayerID": Player,
+            "ClientHash": 0
+        }).then(data => {
+            console.log(data);
+            SetGameViewFromJSON(data);
+        }) .catch(error => console.log(error));
+    }
+
+    function postRequest(url, data){
+        return fetch(url, {
+            credential: 'same-origin',
+            method: 'POST',
+            body: JSON.stringify(data),
+            headers: new Headers({
+                'Content-Type':'application/json'
+            }),
+        }).then(response => response.json())
+    }
+
+</script>
+</html>
